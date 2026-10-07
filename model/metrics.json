@@ -3,26 +3,34 @@
   "train_size": 40814,
   "test_size": 17038,
   "test_scam_rate": 0.0191,
-  "roc_auc": 0.9967,
-  "pr_auc": 0.9123,
-  "anomaly_only_roc_auc": 0.9285,
+  "roc_auc": 0.9968,
+  "pr_auc": 0.9165,
+  "anomaly_only_roc_auc": 0.9141,
   "thresholds": {
     "warn": 0.3,
     "hold": 0.7,
-    "anomaly": 0.99
+    "anomaly": 0.99,
+    "warn_new_customers": 0.65
   },
   "ai_system": {
-    "scam_recall": 0.862,
-    "precision": 0.757,
+    "scam_recall": 0.874,
+    "precision": 0.759,
     "false_alarm_rate": 0.0054,
-    "scam_money_protected_pct": 0.925
+    "scam_money_protected_pct": 0.931
+  },
+  "classifier_only": {
+    "scam_recall": 0.865,
+    "precision": 0.764,
+    "false_alarm_rate": 0.0052,
+    "scam_money_protected_pct": 0.915
   },
   "classifier_and_rules_only": {
-    "scam_recall": 0.862,
-    "precision": 0.757,
-    "false_alarm_rate": 0.0054,
-    "scam_money_protected_pct": 0.925
+    "scam_recall": 0.871,
+    "precision": 0.751,
+    "false_alarm_rate": 0.0056,
+    "scam_money_protected_pct": 0.928
   },
+  "note": "ai_system = full live policy (classifier + rules + anomaly model, new-customer threshold). On KNOWN scam types the anomaly model adds few catches, so ai_system and classifier_and_rules_only are close; its value shows on the unseen scam type below and in model/evaluation.json (engine ablation).",
   "rule_baseline": {
     "scam_recall": 0.425,
     "precision": 0.413,
@@ -30,9 +38,9 @@
     "scam_money_protected_pct": 0.682
   },
   "recall_by_scam_type": {
-    "social_engineering": 0.955,
+    "social_engineering": 0.962,
     "account_takeover": 0.959,
-    "low_signal": 0.632
+    "low_signal": 0.663
   },
   "test_scams_by_type": {
     "none": 16713,
@@ -41,45 +49,47 @@
     "account_takeover": 73
   },
   "novel_scam_test_account_takeover_recall": {
-    "classifier_only": 0.411,
-    "anomaly_only": 0.945,
-    "classifier_plus_anomaly": 0.986
+    "classifier_only": 0.397,
+    "anomaly_only": 0.986,
+    "classifier_plus_anomaly": 1.0
   },
   "fairness_by_tenure": {
     "new_users (<180 days)": {
       "scam_recall": 1.0,
-      "precision": 0.5,
-      "false_alarm_rate": 0.0095,
+      "precision": 0.714,
+      "false_alarm_rate": 0.0038,
       "scam_money_protected_pct": 1.0
     },
     "established_users": {
-      "scam_recall": 0.859,
-      "precision": 0.764,
-      "false_alarm_rate": 0.0053,
-      "scam_money_protected_pct": 0.923
+      "scam_recall": 0.872,
+      "precision": 0.76,
+      "false_alarm_rate": 0.0054,
+      "scam_money_protected_pct": 0.929
     }
   },
   "feature_importance": {
-    "recipient_unique_senders_24h": 0.5267,
-    "is_new_recipient": 0.1334,
-    "amount_ratio": 0.1124,
-    "user_txns_last_1h": 0.0624,
-    "device_changed": 0.0501,
-    "on_active_call": 0.0333,
-    "recipient_account_age_days": 0.0319,
-    "amount": 0.0191,
-    "new_location": 0.0125,
-    "hour": 0.0079,
-    "user_tenure_days": 0.0066,
-    "outside_usual_hours": 0.0035
+    "recipient_unique_senders_24h": 0.4298,
+    "amount_ratio": 0.1638,
+    "is_new_recipient": 0.1542,
+    "device_changed": 0.0751,
+    "user_txns_last_1h": 0.0476,
+    "recipient_account_age_days": 0.0364,
+    "on_active_call": 0.0274,
+    "amount": 0.0217,
+    "new_location": 0.0114,
+    "hour": 0.0078,
+    "device_other_users_30d": 0.0076,
+    "txn_velocity_trend": 0.0062,
+    "user_tenure_days": 0.006,
+    "outside_usual_hours": 0.005
   },
   "network": {
     "wallets_analysed": 9873,
-    "suspected_mules": 54,
+    "suspected_mules": 55,
     "true_mules": 80,
     "true_mules_seen": 77,
     "mule_precision": 1.0,
-    "mule_recall": 0.701,
+    "mule_recall": 0.714,
     "rings_found": 12,
     "true_rings": 12,
     "rings_correct": 12,

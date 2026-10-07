@@ -1,0 +1,35 @@
+{
+  "requests": 2000,
+  "concurrency": 8,
+  "workers": 2,
+  "throughput_rps": 278.7,
+  "latency_ms": {
+    "p50": 26.8,
+    "p95": 51.6,
+    "p99": 66.7
+  },
+  "errors": 0,
+  "rate_limited": 30,
+  "rate_limit_test": "80 requests in a burst on a key limited to 50 per minute",
+  "no_key_status": 401,
+  "machine": "Linux x86_64, Python 3.13.16",
+  "by_workers": {
+    "1": {
+      "throughput_rps": 121.1,
+      "latency_ms": {
+        "p50": 65.9,
+        "p95": 89.4,
+        "p99": 101.0
+      }
+    },
+    "2": {
+      "throughput_rps": 278.7,
+      "latency_ms": {
+        "p50": 26.8,
+        "p95": 51.6,
+        "p99": 66.7
+      }
+    }
+  },
+  "note": "Real HTTP calls to uvicorn on one 2-core machine, latency measured by the client including HTTP. 1 worker: 121 req/s, p95 89.4 ms \u00b7 2 workers: 279 req/s, p95 51.6 ms. Throughput grows with workers or pods (scoring is CPU-bound and stateless apart from the history). Rate limit (single worker): a key limited to 50/min got HTTP 429 for 30 of 80 burst requests; no key gives 401. With several workers the limiter is per process, so in production it belongs in the API gateway or Redis."
+}

@@ -1,0 +1,42 @@
+{
+  "cashouts": 20056,
+  "mule_cashouts": 684,
+  "test_cashouts": 6017,
+  "test_mule": 247,
+  "split": "train before 02 Sep 2026, test after",
+  "roc_auc": 0.9987,
+  "pr_auc": 0.9769,
+  "model": {
+    "caught": 0.907,
+    "precision": 0.809,
+    "false_alarm_rate": 0.0092,
+    "money_stopped": 0.935
+  },
+  "fast_in_out_rule": {
+    "caught": 0.372,
+    "precision": 0.113,
+    "false_alarm_rate": 0.1246,
+    "money_stopped": 0.379
+  },
+  "hold_share_of_mule": 0.773,
+  "genuine_fast_cashouts_paid": 0.99,
+  "agents": {
+    "total": 300,
+    "complicit_truth": 6,
+    "flagged": 3,
+    "correct": 3,
+    "wrongly_flagged": 0
+  },
+  "feature_importance": {
+    "received_24h": 0.7592,
+    "flagged_in_share": 0.0788,
+    "network_flag": 0.065,
+    "hours_since_last_in": 0.0374,
+    "new_agent_for_wallet": 0.0316,
+    "wallet_age_days": 0.0138,
+    "agent_peer_z": 0.0066,
+    "amount": 0.0053,
+    "cash_share_24h": 0.0016,
+    "senders_24h": 0.0008
+  }
+}

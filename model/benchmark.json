@@ -1,0 +1,26 @@
+{
+  "machine": "Linux x86_64, Python 3.13.16, 1 process",
+  "transfers": 86868,
+  "wallets": 13559,
+  "senders": 3380,
+  "history_build_seconds": 12.5,
+  "history_build_transfers_per_second": 6924,
+  "state_memory_mb": 13.9,
+  "bytes_per_wallet": 1028,
+  "projected_gb_per_million_wallets": 1.03,
+  "serialised_state_bytes_busiest_customer": 2914,
+  "serialised_state_bytes_typical_customer": 628,
+  "bounds": {
+    "max_history": 300,
+    "max_contacts": 500,
+    "max_devices_districts": 20,
+    "short_windows": "1 hour and 24 hours, compacted"
+  },
+  "live_latency_ms": {
+    "p50": 4.4,
+    "p95": 6.8,
+    "p99": 8.1,
+    "n": 500
+  },
+  "batch_scoring_transfers_per_second": 75452
+}
