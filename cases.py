@@ -1,115 +1,65 @@
 """
-cases.py — simple case management for fraud analysts, with an audit trail and a PDF case report.
+business.py — business impact estimate: alerts, analyst hours, money protected and friction cost per 100,000 transfers.
 
-Cases live in the Streamlit session (one analyst session). In production they would be stored in upay's
-case management database. Every action is written to the audit trail with a UTC timestamp.
+Our test data has far more scams than real life, so we do NOT use its alert counts directly. We take the rates the
+system achieved on the future test period (how often it warns or holds a genuine transfer, how many scams it catches,
+how much scam money it protects) and apply them to a realistic number of scams worked out from:
+  * the reported loss figure: Tk 92.60 crore per year (Bangladesh Bank data via the Daily Observer, 2025)
+  * the send money (P2P) volume: 134.26 million transfers per month (Bangladesh Bank data, October 2025)
+Every other number is an assumption the user can change.
 """
-import io
-from datetime import datetime, timezone
+import numpy as np
+import pandas as pd
 
-STATUSES = ["Open", "In progress", "Resolved: confirmed fraud", "Resolved: false alarm"]
-
-
-def now():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-
-
-def find_case(cases, ref):
-    return next((c for c in cases if c["ref"] == ref), None)
+LOSS_PER_YEAR_TK = 92.60e7          # Tk 92.60 crore, whole payment ecosystem, 2025
+P2P_PER_MONTH = 134.26e6            # send money transfers per month, October 2025
+DEFAULTS = dict(loss_share=1.0, avg_scam=7114.0, warn_cost=2.0, hold_customer_cost=20.0, analyst_minutes=10.0,
+                analyst_rate=300.0, detection_factor=1.0, false_alarm_factor=1.0, warn_stop_rate=0.6)
+# warn_stop_rate: share of warned SCAM victims who cancel after seeing the warning. A HOLD always stops the money
+# until review; a WARN only helps if the victim listens (a coached victim may press Continue).
 
 
-def create_case(cases, kind, ref, title, priority, evidence, analyst="Fraud analyst"):
-    """Create a case unless one already exists for the same transaction or ring (no duplicates)."""
-    existing = find_case(cases, ref)
-    if existing:
-        return existing, False
-    case = dict(id=f"CASE-{len(cases) + 1:04d}", kind=kind, ref=ref, title=title, priority=priority,
-                status="Open", analyst=analyst, created=now(), evidence=evidence, notes=[], audit=[])
-    case["audit"].append(dict(time=case["created"], actor=analyst, action="Case created",
-                              detail=f"Escalated from {kind.lower()} {ref}"))
-    cases.append(case)
-    return case, True
+def measured_rates(scored: pd.DataFrame, label_col: str = "is_fraud") -> dict:
+    """Rates achieved on a labelled test set that already has a `decision` column (ALLOW / WARN / HOLD)."""
+    y = scored[label_col].astype(int).values == 1
+    gen = max((~y).sum(), 1)
+    sc = max(y.sum(), 1)
+    d = scored.decision.values
+    amt = scored.amount.values
+    rule = ((scored.is_new_recipient == 1) & (scored.amount >= 5000)).values
+    return dict(
+        n_test=int(len(scored)), n_scams=int(y.sum()),
+        warn_genuine=float(((d == "WARN") & ~y).sum() / gen), hold_genuine=float(((d == "HOLD") & ~y).sum() / gen),
+        warn_scam=float(((d == "WARN") & y).sum() / sc), hold_scam=float(((d == "HOLD") & y).sum() / sc),
+        money_protected=float(amt[(d != "ALLOW") & y].sum() / max(amt[y].sum(), 1)),
+        avg_scam=float(amt[y].mean()) if y.any() else DEFAULTS["avg_scam"],
+        rule_false_alarm=float((rule & ~y).sum() / gen), rule_recall=float((rule & y).sum() / sc),
+        rule_money=float(amt[rule & y].sum() / max(amt[y].sum(), 1)))
 
 
-def update_status(case, status, actor):
-    if status != case["status"]:
-        case["audit"].append(dict(time=now(), actor=actor, action="Status changed",
-                                  detail=f"{case['status']} -> {status}"))
-        case["status"] = status
-
-
-def assign(case, analyst, actor):
-    if analyst and analyst != case["analyst"]:
-        case["audit"].append(dict(time=now(), actor=actor, action="Assigned", detail=f"{case['analyst']} -> {analyst}"))
-        case["analyst"] = analyst
-
-
-def add_note(case, text, actor):
-    if text.strip():
-        case["notes"].append(dict(time=now(), actor=actor, text=text.strip()))
-        case["audit"].append(dict(time=now(), actor=actor, action="Note added", detail=text.strip()[:80]))
-
-
-def pdf_report(case):
-    """Build a PDF case report (English) from the evidence captured when the case was created."""
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib.units import cm
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-
-    NAVY, BLUE, LIGHT = colors.HexColor("#06306B"), colors.HexColor("#0B5CAD"), colors.HexColor("#EAF2FB")
-    st = getSampleStyleSheet()
-    st["Title"].textColor = NAVY
-    st["Heading2"].textColor = BLUE
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm, topMargin=1.8 * cm,
-                            bottomMargin=1.8 * cm, title=f"{case['id']} case report")
-
-    def table(rows, widths, header=True):
-        t = Table(rows, colWidths=widths, repeatRows=1 if header else 0)
-        style = [("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#B8C7DA")), ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                 ("FONTSIZE", (0, 0), (-1, -1), 8.5), ("LEFTPADDING", (0, 0), (-1, -1), 5)]
-        if header:
-            style += [("BACKGROUND", (0, 0), (-1, 0), NAVY), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white)]
-        t.setStyle(TableStyle(style))
-        return t
-
-    clean = lambda s: str(s).replace("৳", "BDT ")   # standard PDF fonts have no Taka sign
-    P = lambda s: Paragraph(clean(s), st["BodyText"])
-    ev = case["evidence"]
-    story = [Paragraph(f"upay ScamShield: {case['id']}", st["Title"]),
-             P(f"<b>{case['title']}</b>"),
-             Spacer(1, 6),
-             table([["Priority", case["priority"], "Status", case["status"]],
-                    ["Analyst", case["analyst"], "Created", case["created"]],
-                    ["Type", case["kind"], "Reference", case["ref"]]], [3 * cm, 5.5 * cm, 3 * cm, 5.5 * cm], header=False)]
-    for heading, key in [("What happened", "what"), ("Why it is risky", "why"), ("What upay should do next", "next")]:
-        if ev.get(key):
-            story += [Paragraph(heading, st["Heading2"])]
-            items = ev[key] if isinstance(ev[key], list) else [ev[key]]
-            story += [P(("&bull; " if len(items) > 1 else "") + str(x)) for x in items]
-    if ev.get("engines"):
-        story += [Paragraph("Engine agreement", st["Heading2"]),
-                  table([["Engine", "Method", "Score", "Flag", "Finding"]] +
-                        [[e["name"], e["method"], f"{e['score']:.1%}", "YES" if e["flagged"] else "no", P(e["note"])]
-                         for e in ev["engines"]], [3.3 * cm, 3.4 * cm, 1.5 * cm, 1.2 * cm, 7.6 * cm])]
-    if ev.get("profile"):
-        story += [Paragraph("Customer behaviour vs. own baseline", st["Heading2"]),
-                  table([["Dimension", "Customer baseline", "This transfer", "Finding"]] +
-                        [[p["dimension"], P(p["baseline"]), P(p["this_transfer"]),
-                          P(("UNUSUAL: " if p["unusual"] else "") + p["deviation"])] for p in ev["profile"]],
-                        [3 * cm, 4.6 * cm, 3.6 * cm, 5.8 * cm])]
-    if ev.get("ring_wallets"):
-        story += [Paragraph("Wallets in this ring", st["Heading2"]), P(", ".join(ev["ring_wallets"]))]
-    story += [Paragraph("Analyst notes", st["Heading2"])]
-    story += [P(f"<b>{n['time']}</b> ({n['actor']}): {n['text']}") for n in case["notes"]] or [P("No notes yet.")]
-    story += [Paragraph("Audit trail", st["Heading2"]),
-              table([["Time (UTC)", "Actor", "Action", "Detail"]] +
-                    [[a["time"], a["actor"], a["action"], P(a["detail"])] for a in case["audit"]],
-                    [4 * cm, 3 * cm, 3 * cm, 7 * cm]),
-              Spacer(1, 10),
-              P("<i>Generated by upay ScamShield prototype. All data is synthetic. AI findings are decision support; "
-                "final decisions are made by a human analyst.</i>")]
-    doc.build(story)
-    return buf.getvalue()
+def estimate(rates: dict, loss_share=1.0, avg_scam=7114.0, warn_cost=2.0, hold_customer_cost=20.0,
+             analyst_minutes=10.0, analyst_rate=300.0, detection_factor=1.0, false_alarm_factor=1.0, per=100_000,
+             warn_stop_rate=0.6, loss_per_year=LOSS_PER_YEAR_TK, transfers_per_month=P2P_PER_MONTH):
+    """Per `per` send money transfers: ScamShield vs a simple rule (which has no WARN step: every alert is reviewed).
+    `loss_per_year` and `transfers_per_month` default to the published national figures; an operator enters its own."""
+    loss = loss_per_year / (transfers_per_month * 12) * per * loss_share
+    scams = loss / avg_scam
+    genuine = per - scams
+    hold_cost = hold_customer_cost + analyst_minutes / 60 * analyst_rate
+    warns = genuine * rates["warn_genuine"] * false_alarm_factor + scams * rates["warn_scam"] * detection_factor
+    holds = genuine * rates["hold_genuine"] * false_alarm_factor + scams * rates["hold_scam"] * detection_factor
+    caught = rates["hold_scam"] + rates["warn_scam"]
+    effective = (rates["hold_scam"] + rates["warn_scam"] * warn_stop_rate) / caught if caught else 0.0
+    protected = loss * min(rates["money_protected"] * detection_factor, 1.0) * effective
+    friction = genuine * rates["warn_genuine"] * false_alarm_factor * warn_cost + holds * hold_cost
+    r_alerts = genuine * rates["rule_false_alarm"] + scams * rates["rule_recall"]
+    r_protected = loss * rates["rule_money"]
+    r_friction = r_alerts * hold_cost
+    return {
+        "ScamShield": dict(scams=scams, alerts=warns + holds, warn=warns, hold=holds, analyst_hours=holds * analyst_minutes / 60,
+                           protected=protected, friction=friction, net=protected - friction,
+                           ratio=protected / friction if friction else np.inf),
+        "Simple rule": dict(scams=scams, alerts=r_alerts, warn=0.0, hold=r_alerts, analyst_hours=r_alerts * analyst_minutes / 60,
+                            protected=r_protected, friction=r_friction, net=r_protected - r_friction,
+                            ratio=r_protected / r_friction if r_friction else np.inf),
+        "loss_per_unit": loss}
