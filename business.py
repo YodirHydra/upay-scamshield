@@ -14,7 +14,9 @@ import pandas as pd
 LOSS_PER_YEAR_TK = 92.60e7          # Tk 92.60 crore, whole payment ecosystem, 2025
 P2P_PER_MONTH = 134.26e6            # send money transfers per month, October 2025
 DEFAULTS = dict(loss_share=1.0, avg_scam=7114.0, warn_cost=2.0, hold_customer_cost=20.0, analyst_minutes=10.0,
-                analyst_rate=300.0, detection_factor=1.0, false_alarm_factor=1.0)
+                analyst_rate=300.0, detection_factor=1.0, false_alarm_factor=1.0, warn_stop_rate=0.6)
+# warn_stop_rate: share of warned SCAM victims who cancel after seeing the warning. A HOLD always stops the money
+# until review; a WARN only helps if the victim listens (a coached victim may press Continue).
 
 
 def measured_rates(scored: pd.DataFrame, label_col: str = "is_fraud") -> dict:
@@ -36,15 +38,19 @@ def measured_rates(scored: pd.DataFrame, label_col: str = "is_fraud") -> dict:
 
 
 def estimate(rates: dict, loss_share=1.0, avg_scam=7114.0, warn_cost=2.0, hold_customer_cost=20.0,
-             analyst_minutes=10.0, analyst_rate=300.0, detection_factor=1.0, false_alarm_factor=1.0, per=100_000):
-    """Per `per` send money transfers: ScamShield vs a simple rule (which has no WARN step: every alert is reviewed)."""
-    loss = LOSS_PER_YEAR_TK / (P2P_PER_MONTH * 12) * per * loss_share
+             analyst_minutes=10.0, analyst_rate=300.0, detection_factor=1.0, false_alarm_factor=1.0, per=100_000,
+             warn_stop_rate=0.6, loss_per_year=LOSS_PER_YEAR_TK, transfers_per_month=P2P_PER_MONTH):
+    """Per `per` send money transfers: ScamShield vs a simple rule (which has no WARN step: every alert is reviewed).
+    `loss_per_year` and `transfers_per_month` default to the published national figures; an operator enters its own."""
+    loss = loss_per_year / (transfers_per_month * 12) * per * loss_share
     scams = loss / avg_scam
     genuine = per - scams
     hold_cost = hold_customer_cost + analyst_minutes / 60 * analyst_rate
     warns = genuine * rates["warn_genuine"] * false_alarm_factor + scams * rates["warn_scam"] * detection_factor
     holds = genuine * rates["hold_genuine"] * false_alarm_factor + scams * rates["hold_scam"] * detection_factor
-    protected = loss * min(rates["money_protected"] * detection_factor, 1.0)
+    caught = rates["hold_scam"] + rates["warn_scam"]
+    effective = (rates["hold_scam"] + rates["warn_scam"] * warn_stop_rate) / caught if caught else 0.0
+    protected = loss * min(rates["money_protected"] * detection_factor, 1.0) * effective
     friction = genuine * rates["warn_genuine"] * false_alarm_factor * warn_cost + holds * hold_cost
     r_alerts = genuine * rates["rule_false_alarm"] + scams * rates["rule_recall"]
     r_protected = loss * rates["rule_money"]
