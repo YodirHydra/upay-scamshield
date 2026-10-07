@@ -1,0 +1,468 @@
+{
+  "test_period": "11 Sep 2026 onwards",
+  "test_transfers": 17038,
+  "test_scams": 325,
+  "network_built_before": "11 Sep 2026",
+  "suspect_wallets": 46,
+  "ablation": {
+    "All engines": {
+      "scams_caught": 0.8892,
+      "precision": 0.7585,
+      "false_alarm_rate": 0.0055,
+      "money_protected": 0.9375,
+      "unique_catches": null
+    },
+    "Scam classifier": {
+      "alone": {
+        "scams_caught": 0.8646,
+        "precision": 0.772,
+        "false_alarm_rate": 0.00497,
+        "money_protected": 0.9153
+      },
+      "without": {
+        "scams_caught": 0.6615,
+        "precision": 0.9389,
+        "false_alarm_rate": 0.00084,
+        "money_protected": 0.7962
+      },
+      "unique_catches": 74
+    },
+    "Behaviour anomaly": {
+      "alone": {
+        "scams_caught": 0.1785,
+        "precision": 1.0,
+        "false_alarm_rate": 0.0,
+        "money_protected": 0.3032
+      },
+      "without": {
+        "scams_caught": 0.8892,
+        "precision": 0.7585,
+        "false_alarm_rate": 0.0055,
+        "money_protected": 0.9375
+      },
+      "unique_catches": 0
+    },
+    "Takeover check": {
+      "alone": {
+        "scams_caught": 0.1723,
+        "precision": 0.9655,
+        "false_alarm_rate": 0.00012,
+        "money_protected": 0.2862
+      },
+      "without": {
+        "scams_caught": 0.8892,
+        "precision": 0.7625,
+        "false_alarm_rate": 0.00539,
+        "money_protected": 0.9375
+      },
+      "unique_catches": 0
+    },
+    "Network check": {
+      "alone": {
+        "scams_caught": 0.5046,
+        "precision": 1.0,
+        "false_alarm_rate": 0.0,
+        "money_protected": 0.5636
+      },
+      "without": {
+        "scams_caught": 0.8769,
+        "precision": 0.756,
+        "false_alarm_rate": 0.0055,
+        "money_protected": 0.9333
+      },
+      "unique_catches": 4
+    },
+    "Call-coaching rule": {
+      "alone": {
+        "scams_caught": 0.2154,
+        "precision": 0.8537,
+        "false_alarm_rate": 0.00072,
+        "money_protected": 0.3429
+      },
+      "without": {
+        "scams_caught": 0.8862,
+        "precision": 0.7721,
+        "false_alarm_rate": 0.00509,
+        "money_protected": 0.9338
+      },
+      "unique_catches": 1
+    }
+  },
+  "unseen_takeover_ablation": {
+    "All engines": 1.0,
+    "Scam classifier": {
+      "alone": 0.397,
+      "without": 0.986,
+      "unique_catches": 1
+    },
+    "Behaviour anomaly": {
+      "alone": 0.986,
+      "without": 0.973,
+      "unique_catches": 2
+    },
+    "Takeover check": {
+      "alone": 0.767,
+      "without": 1.0,
+      "unique_catches": 0
+    },
+    "Network check": {
+      "alone": 0.658,
+      "without": 1.0,
+      "unique_catches": 0
+    },
+    "Call-coaching rule": {
+      "alone": 0.041,
+      "without": 1.0,
+      "unique_catches": 0
+    },
+    "takeovers_in_test": 73
+  },
+  "corroboration": {
+    "1+ engines": {
+      "alerts": 381,
+      "precision": 0.7585,
+      "scams_caught": 0.8892
+    },
+    "2+ engines": {
+      "alerts": 215,
+      "precision": 0.9767,
+      "scams_caught": 0.6462
+    },
+    "3+ engines": {
+      "alerts": 96,
+      "precision": 1.0,
+      "scams_caught": 0.2954
+    }
+  },
+  "detection_by_type": {
+    "social_engineering": {
+      "Scam classifier": 0.955,
+      "Behaviour anomaly": 0.006,
+      "Takeover check": 0.0,
+      "Network check": 0.586,
+      "Call-coaching rule": 0.414,
+      "All engines": 0.968
+    },
+    "account_takeover": {
+      "Scam classifier": 0.932,
+      "Behaviour anomaly": 0.781,
+      "Takeover check": 0.767,
+      "Network check": 0.658,
+      "Call-coaching rule": 0.041,
+      "All engines": 1.0
+    },
+    "low_signal": {
+      "Scam classifier": 0.663,
+      "Behaviour anomaly": 0.0,
+      "Takeover check": 0.0,
+      "Network check": 0.253,
+      "Call-coaching rule": 0.021,
+      "All engines": 0.674
+    }
+  },
+  "operating_points": {
+    "Current policy": {
+      "scams_caught": 0.8892,
+      "precision": 0.7585,
+      "false_alarm_rate": 0.0055,
+      "money_protected": 0.9375,
+      "hold_genuine": 0.00126,
+      "hold_scams": 0.8,
+      "warn_genuine": 0.00425
+    },
+    "HOLD only if 2+ engines agree": {
+      "scams_caught": 0.8892,
+      "precision": 0.7585,
+      "false_alarm_rate": 0.0055,
+      "money_protected": 0.9375,
+      "hold_genuine": 6e-05,
+      "hold_scams": 0.6185,
+      "warn_genuine": 0.00544
+    },
+    "HOLD only if 3+ engines agree": {
+      "scams_caught": 0.8892,
+      "precision": 0.7585,
+      "false_alarm_rate": 0.0055,
+      "money_protected": 0.9375,
+      "hold_genuine": 0.0,
+      "hold_scams": 0.2892,
+      "warn_genuine": 0.0055
+    },
+    "Strict: warn only on classifier >= 0.5": {
+      "scams_caught": 0.8615,
+      "precision": 0.8309,
+      "false_alarm_rate": 0.00341,
+      "money_protected": 0.9176,
+      "hold_genuine": 0.00126,
+      "hold_scams": 0.8,
+      "warn_genuine": 0.00215
+    }
+  },
+  "fairness": {
+    "train period": {
+      "new customers (<180 days)": {
+        "false_alarms": 5,
+        "genuine_transfers": 1715,
+        "rate": 0.00292,
+        "ci95": [
+          0.00125,
+          0.00681
+        ]
+      },
+      "established customers": {
+        "false_alarms": 284,
+        "genuine_transfers": 37631,
+        "rate": 0.00755,
+        "ci95": [
+          0.00672,
+          0.00847
+        ]
+      }
+    },
+    "test period": {
+      "new customers (<180 days)": {
+        "false_alarms": 2,
+        "genuine_transfers": 528,
+        "rate": 0.00379,
+        "ci95": [
+          0.00104,
+          0.0137
+        ]
+      },
+      "established customers": {
+        "false_alarms": 88,
+        "genuine_transfers": 16185,
+        "rate": 0.00544,
+        "ci95": [
+          0.00442,
+          0.00669
+        ]
+      }
+    }
+  },
+  "fairness_fix": {
+    "train period": {
+      "before (warn 0.30 for all)": {
+        "new": {
+          "rate": 0.00583,
+          "false_alarms": 10,
+          "genuine": 1715,
+          "ci95": [
+            0.00317,
+            0.0107
+          ],
+          "scams_caught": 1.0
+        },
+        "established": {
+          "rate": 0.00755,
+          "false_alarms": 284,
+          "genuine": 37631,
+          "ci95": [
+            0.00672,
+            0.00847
+          ],
+          "scams_caught": 1.0
+        },
+        "all_scams_caught": 1.0
+      },
+      "after (new customers warn 0.65)": {
+        "new": {
+          "rate": 0.00292,
+          "false_alarms": 5,
+          "genuine": 1715,
+          "ci95": [
+            0.00125,
+            0.00681
+          ],
+          "scams_caught": 1.0
+        },
+        "established": {
+          "rate": 0.00755,
+          "false_alarms": 284,
+          "genuine": 37631,
+          "ci95": [
+            0.00672,
+            0.00847
+          ],
+          "scams_caught": 1.0
+        },
+        "all_scams_caught": 1.0
+      }
+    },
+    "test period": {
+      "before (warn 0.30 for all)": {
+        "new": {
+          "rate": 0.01136,
+          "false_alarms": 6,
+          "genuine": 528,
+          "ci95": [
+            0.00522,
+            0.02457
+          ],
+          "scams_caught": 1.0
+        },
+        "established": {
+          "rate": 0.00544,
+          "false_alarms": 88,
+          "genuine": 16185,
+          "ci95": [
+            0.00442,
+            0.00669
+          ],
+          "scams_caught": 0.8719
+        },
+        "all_scams_caught": 0.8738
+      },
+      "after (new customers warn 0.65)": {
+        "new": {
+          "rate": 0.00379,
+          "false_alarms": 2,
+          "genuine": 528,
+          "ci95": [
+            0.00104,
+            0.0137
+          ],
+          "scams_caught": 1.0
+        },
+        "established": {
+          "rate": 0.00544,
+          "false_alarms": 88,
+          "genuine": 16185,
+          "ci95": [
+            0.00442,
+            0.00669
+          ],
+          "scams_caught": 0.8719
+        },
+        "all_scams_caught": 0.8738
+      }
+    }
+  },
+  "engine_ladder": [
+    {
+      "step": "XGBoost classifier only",
+      "scams_caught": 0.8646,
+      "precision": 0.772,
+      "false_alarm_rate": 0.00497,
+      "money_protected": 0.9153,
+      "social_engineering": 0.955,
+      "account_takeover": 0.932,
+      "low_signal": 0.663
+    },
+    {
+      "step": "+ takeover check",
+      "scams_caught": 0.8738,
+      "precision": 0.7696,
+      "false_alarm_rate": 0.00509,
+      "money_protected": 0.9295,
+      "social_engineering": 0.955,
+      "account_takeover": 0.973,
+      "low_signal": 0.663
+    },
+    {
+      "step": "+ call-coaching rule",
+      "scams_caught": 0.8769,
+      "precision": 0.756,
+      "false_alarm_rate": 0.0055,
+      "money_protected": 0.9333,
+      "social_engineering": 0.962,
+      "account_takeover": 0.973,
+      "low_signal": 0.663
+    },
+    {
+      "step": "+ behaviour anomaly",
+      "scams_caught": 0.8769,
+      "precision": 0.756,
+      "false_alarm_rate": 0.0055,
+      "money_protected": 0.9333,
+      "social_engineering": 0.962,
+      "account_takeover": 0.973,
+      "low_signal": 0.663
+    },
+    {
+      "step": "+ network check",
+      "scams_caught": 0.8892,
+      "precision": 0.7585,
+      "false_alarm_rate": 0.0055,
+      "money_protected": 0.9375,
+      "social_engineering": 0.968,
+      "account_takeover": 1.0,
+      "low_signal": 0.674
+    },
+    {
+      "step": "Simple rule (new recipient and \u09f35,000+)",
+      "scams_caught": 0.4246,
+      "precision": 0.4132,
+      "false_alarm_rate": 0.01173,
+      "money_protected": 0.6815,
+      "social_engineering": 0.58,
+      "account_takeover": 0.452,
+      "low_signal": 0.147
+    }
+  ],
+  "robustness": {
+    "Same mix, new customers (seed 2027)": {
+      "transfers": 57919,
+      "scams": 1823,
+      "scamshield": {
+        "scams_caught": 0.944,
+        "precision": 0.802,
+        "false_alarm_rate": 0.00758,
+        "money_protected": 0.9764
+      },
+      "rule": {
+        "scams_caught": 0.4109,
+        "precision": 0.4615,
+        "false_alarm_rate": 0.01558,
+        "money_protected": 0.6554
+      },
+      "by_type": {
+        "social_engineering": 0.972,
+        "account_takeover": 0.984,
+        "low_signal": 0.759
+      }
+    },
+    "More low-signal scams (x3), fewer phone scams (/2)": {
+      "transfers": 57891,
+      "scams": 1857,
+      "scamshield": {
+        "scams_caught": 0.909,
+        "precision": 0.7822,
+        "false_alarm_rate": 0.00839,
+        "money_protected": 0.9609
+      },
+      "rule": {
+        "scams_caught": 0.3279,
+        "precision": 0.3962,
+        "false_alarm_rate": 0.01656,
+        "money_protected": 0.5835
+      },
+      "by_type": {
+        "social_engineering": 0.988,
+        "account_takeover": 0.984,
+        "low_signal": 0.81
+      }
+    },
+    "Takeover wave (x3 takeovers)": {
+      "transfers": 58839,
+      "scams": 2905,
+      "scamshield": {
+        "scams_caught": 0.9532,
+        "precision": 0.8632,
+        "false_alarm_rate": 0.00785,
+        "money_protected": 0.9807
+      },
+      "rule": {
+        "scams_caught": 0.4103,
+        "precision": 0.5555,
+        "false_alarm_rate": 0.01706,
+        "money_protected": 0.5937
+      },
+      "by_type": {
+        "social_engineering": 0.986,
+        "account_takeover": 0.994,
+        "low_signal": 0.581
+      }
+    }
+  }
+}
