@@ -37,7 +37,7 @@ def _amt(x):
     return float(min(max(round(x / 10) * 10, 10), MAX_AMOUNT))
 
 
-def generate(seed=42, n_legit=84000):
+def generate(seed=42, n_legit=84000, n_social=1000, n_takeover=220, n_low=270):
     rng = np.random.default_rng(seed)
     wid = iter(rng.choice(90000, 90000, replace=False) + 10000)
     W = lambda: f"W{next(wid):05d}"
@@ -111,23 +111,27 @@ def generate(seed=42, n_legit=84000):
     old_mules = [m for m in mules if created[m] < START]
 
     # social engineering: coached on the phone, during the victim's normal hours, from their own phone
-    for _ in range(1000):
+    for _ in range(n_social):
         c, m = victim(), pick_mule()
         add(_ts(in_window(m), rng.integers(c.start, c.end + 1), rng), c.id, m, c.usual * rng.uniform(1.5, 8),
             c.devices[0], c.home, rng.random() < 0.7, c.created, 1, "social_engineering")
     # account takeover: new device, often a new place and at night, several quick drains
-    for _ in range(220):
+    for _ in range(n_takeover):
         c, m = victim(), pick_mule()
         day = in_window(m)
         hour = rng.integers(0, 6) if rng.random() < 0.6 else rng.integers(c.start, c.end + 1)
-        dev = f"DEV-{rng.integers(0, 65535):04X}" if rng.random() < 0.85 else c.devices[0]
+        if rng.random() < 0.85:   # a new phone; 6 in 10 takeovers come from one of 12 shared fraud-farm handsets
+            x = int(rng.integers(0, 65535))
+            dev = f"DEV-F{x % 12:02d}" if x % 10 < 6 else f"DEV-{x:04X}"
+        else:
+            dev = c.devices[0]
         dist = rng.choice([d for d in DISTRICTS if d != c.home]) if rng.random() < 0.7 else c.home
         minute = int(rng.integers(0, 30))
         for k in range(int(rng.integers(1, 5))):
             add(_ts(day, hour, rng, minute=min(59, minute + 6 * k)), c.id, m if rng.random() < 0.7 else pick_mule(),
                 c.usual * rng.uniform(3, 15), dev, dist, rng.random() < 0.1, c.created, 1, "account_takeover")
     # low-signal scams: look almost normal
-    for _ in range(270):
+    for _ in range(n_low):
         c, m = victim(), rng.choice(old_mules)
         add(_ts(in_window(m), rng.integers(c.start, c.end + 1), rng), c.id, m, c.usual * rng.uniform(1, 3),
             c.devices[0], c.home, rng.random() < 0.05, c.created, 1, "low_signal")
