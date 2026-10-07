@@ -4,3 +4,7 @@ __pycache__/
 .env
 # Dataset B (your own data) is never committed
 workspaces/
+# analyst label exports and local API logs
+labels/
+*.log
+logs/
