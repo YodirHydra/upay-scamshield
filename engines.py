@@ -65,8 +65,10 @@ def engine_panel(prob, anom, row, recipient_id, wallets, ring_of):
     t_score, t_flag, t_sig = takeover_check(row)
     n_score, n_flag, n_note = network_check(recipient_id, wallets, ring_of)
     engines = [
-        dict(name="Scam classifier", method="XGBoost + SHAP", score=prob, flagged=prob >= re_.WARN_THRESHOLD,
-             note=f"Scam probability {prob:.0%}"),
+        dict(name="Scam classifier", method="XGBoost + SHAP", score=prob,
+             flagged=prob >= re_.warn_threshold(row.get("user_tenure_days")),
+             note=f"Scam probability {prob:.0%}" + (f" (new customer: warns at {re_.NEW_CUSTOMER_WARN:.0%})"
+                                                     if re_.warn_threshold(row.get("user_tenure_days")) != re_.WARN_THRESHOLD else "")),
         dict(name="Behaviour anomaly", method="Isolation Forest", score=anom, flagged=anom >= re_.ANOMALY_THRESHOLD,
              note=f"More unusual than {anom:.1%} of normal transfers (flag at {re_.ANOMALY_THRESHOLD:.0%})"),
         dict(name="Takeover check", method="Customer profile rules", score=t_score, flagged=t_flag,
