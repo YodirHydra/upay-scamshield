@@ -79,8 +79,9 @@ def main():
     p = model.predict_proba(test_df[FEATURES])[:, 1]
     a = re_.anomaly(iforest, test_df)
     rules_only = test_df.apply(lambda r: len(re_.business_rules(r)) > 0, axis=1).values
-    flagged_xgb = (p >= re_.WARN_THRESHOLD) | rules_only
-    flagged_ai = flagged_xgb | (a >= re_.ANOMALY_THRESHOLD)
+    clf_only = p >= re_.WARN_THRESHOLD                                     # XGBoost alone, no rules, no anomaly
+    flagged_xgb = clf_only | rules_only                                    # + takeover and call-coaching rules
+    flagged_ai = (re_.score_frame(model, iforest, test_df).decision != "ALLOW").values   # full live policy
     baseline = ((test_df.is_new_recipient == 1) & (test_df.amount >= 5000)).values
     groups = {"new_users (<180 days)": test_df.user_tenure_days.values < 180,
               "established_users": test_df.user_tenure_days.values >= 180}
@@ -116,9 +117,14 @@ def main():
         "roc_auc": round(float(roc_auc_score(y, p)), 4),
         "pr_auc": round(float(average_precision_score(y, p)), 4),
         "anomaly_only_roc_auc": round(float(roc_auc_score(y, a)), 4),
-        "thresholds": {"warn": re_.WARN_THRESHOLD, "hold": re_.HOLD_THRESHOLD, "anomaly": re_.ANOMALY_THRESHOLD},
+        "thresholds": {"warn": re_.WARN_THRESHOLD, "hold": re_.HOLD_THRESHOLD, "anomaly": re_.ANOMALY_THRESHOLD,
+                       "warn_new_customers": re_.NEW_CUSTOMER_WARN},
         "ai_system": flag_stats(y, flagged_ai, amounts),
+        "classifier_only": flag_stats(y, clf_only, amounts),
         "classifier_and_rules_only": flag_stats(y, flagged_xgb, amounts),
+        "note": ("ai_system = full live policy (classifier + rules + anomaly model, new-customer threshold). On KNOWN "
+                 "scam types the anomaly model adds few catches, so ai_system and classifier_and_rules_only are close; "
+                 "its value shows on the unseen scam type below and in model/evaluation.json (engine ablation)."),
         "rule_baseline": flag_stats(y, baseline, amounts),
         "recall_by_scam_type": {t: round(float(flagged_ai[(test_df.scam_type == t).values].mean()), 3)
                                 for t in ["social_engineering", "account_takeover", "low_signal"]
