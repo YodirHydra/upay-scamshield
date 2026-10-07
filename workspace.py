@@ -144,6 +144,18 @@ def build_b(raw: pd.DataFrame, name: str = "B", progress=lambda msg: None) -> di
     return metrics
 
 
+def cleanup(max_age_hours: float = 12):
+    """Delete per-session Dataset B folders (workspaces/B_*) not touched for a while."""
+    import time
+    root = os.path.join(HERE, "workspaces")
+    if not os.path.isdir(root):
+        return
+    for d in os.listdir(root):
+        full = os.path.join(root, d)
+        if d.startswith("B_") and os.path.isdir(full) and time.time() - os.path.getmtime(full) > max_age_hours * 3600:
+            shutil.rmtree(full, ignore_errors=True)
+
+
 def delete(name: str = "B"):
     shutil.rmtree(paths(name)["root"], ignore_errors=True)
 
