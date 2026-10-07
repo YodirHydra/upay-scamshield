@@ -5,3 +5,7 @@ backgroundColor = "#040A16"
 secondaryBackgroundColor = "#0E2142"
 textColor = "#E6EEF8"
 font = "sans serif"
+
+[server]
+# Dataset B uploads: CSV only, at most 50 MB (checked again in the app). XSRF protection stays on (default).
+maxUploadSize = 50
